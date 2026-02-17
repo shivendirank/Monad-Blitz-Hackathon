@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useConfessions } from '@/hooks/useConfessions';
-import { walletService, type WalletState } from '@/lib/walletService';
 import { ChevronDown, Send, MessageSquare, Zap } from 'lucide-react';
 
 // Hard-coded teams list
@@ -143,120 +142,18 @@ interface ConfessionProps {
   replies: ReplyProps[];
 }
 
-const ReplyCard: React.FC<ReplyProps & { index: number }> = ({
-  id,
-  content,
-  upvotes,
-  downvotes,
-  tokReward,
-  created_at,
-  index,
-}) => {
-  const [upvoted, setUpvoted] = useState(false);
-  const [downvoted, setDownvoted] = useState(false);
-  const [upvoteCount, setUpvoteCount] = useState(upvotes);
-  const [downvoteCount, setDownvoteCount] = useState(downvotes);
-
-  const formatTime = (date: string) => {
-    const now = new Date();
-    const confDate = new Date(date);
-    const diff = Math.floor((now.getTime() - confDate.getTime()) / 1000);
-    
-    if (diff < 60) return `${diff}s ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    return `${Math.floor(diff / 3600)}h ago`;
-  };
-
-  const netVotes = upvoteCount - downvoteCount;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.05 }}
-      className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700/50 rounded-xl p-4 ml-4 md:ml-8 hover:bg-gradient-to-br hover:from-slate-800/60 hover:to-slate-900/60 transition-all duration-300"
-    >
-      <div className="flex flex-col gap-3">
-        <p className="text-sm text-slate-200 leading-relaxed">{content}</p>
-        
-        <div className="flex items-center justify-between pt-2 border-t border-slate-700/30">
-          <p className="text-xs text-slate-500">{formatTime(created_at)}</p>
-          <div className="flex items-center gap-2">
-            <div className="bg-amber-500/20 border border-amber-400/30 rounded px-2 py-1">
-              <p className="text-amber-300 text-xs font-bold">+{tokReward} 🍕</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              if (downvoted) {
-                setDownvoted(false);
-                setDownvoteCount(downvoteCount - 1);
-              }
-              setUpvoted(!upvoted);
-              setUpvoteCount(upvoted ? upvoteCount - 1 : upvoteCount + 1);
-            }}
-            className={`text-xs px-2 py-1 rounded transition-all ${
-              upvoted
-                ? 'bg-green-500/30 text-green-300'
-                : 'bg-slate-700/40 text-slate-400 hover:bg-slate-700/60'
-            }`}
-          >
-            👍 {upvoteCount}
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => {
-              if (upvoted) {
-                setUpvoted(false);
-                setUpvoteCount(upvoteCount - 1);
-              }
-              setDownvoted(!downvoted);
-              setDownvoteCount(downvoted ? downvoteCount - 1 : downvoteCount + 1);
-            }}
-            className={`text-xs px-2 py-1 rounded transition-all ${
-              downvoted
-                ? 'bg-red-500/30 text-red-300'
-                : 'bg-slate-700/40 text-slate-400 hover:bg-slate-700/60'
-            }`}
-          >
-            👎 {downvoteCount}
-          </motion.button>
-
-          <span className="text-xs text-indigo-300 font-semibold ml-1">
-            {netVotes > 0 ? '+' : ''}{netVotes}
-          </span>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 const ConfessionCard: React.FC<ConfessionProps & { index: number }> = ({
   id,
   team_name,
   content,
-  upvotes,
-  downvotes,
+  likes,
   created_at,
-  tokReward,
-  replies,
   index,
 }) => {
   const [upvoted, setUpvoted] = useState(false);
   const [downvoted, setDownvoted] = useState(false);
-  const [upvoteCount, setUpvoteCount] = useState(upvotes);
-  const [downvoteCount, setDownvoteCount] = useState(downvotes);
-  const [showReplies, setShowReplies] = useState(false);
-  const [replyInput, setReplyInput] = useState('');
-  const [isReplying, setIsReplying] = useState(false);
-  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState(Math.floor(Math.random() * 500) + 50);
+  const [downvoteCount, setDownvoteCount] = useState(Math.floor(Math.random() * 100) + 5);
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
 
@@ -276,8 +173,8 @@ const ConfessionCard: React.FC<ConfessionProps & { index: number }> = ({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    const rotX = ((y - rect.height / 2) / rect.height) * 8;
-    const rotY = ((x - rect.width / 2) / rect.width) * 8;
+    const rotX = ((y - rect.height / 2) / rect.height) * 10;
+    const rotY = ((x - rect.width / 2) / rect.width) * 10;
     
     setRotateX(rotX);
     setRotateY(rotY);
@@ -291,17 +188,6 @@ const ConfessionCard: React.FC<ConfessionProps & { index: number }> = ({
   const netVotes = upvoteCount - downvoteCount;
   const votePercentage = upvoteCount / (upvoteCount + downvoteCount) * 100;
 
-  const handleReply = () => {
-    if (replyInput.trim()) {
-      setIsReplying(true);
-      setTimeout(() => {
-        setReplyInput('');
-        setShowReplyForm(false);
-        setIsReplying(false);
-      }, 600);
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 40, rotateX: -20 }}
@@ -311,14 +197,16 @@ const ConfessionCard: React.FC<ConfessionProps & { index: number }> = ({
         duration: 0.5,
         delay: index * 0.08,
         type: 'spring',
-        stiffness: 75,
-        damping: 18,
+        stiffness: 80,
+        damping: 20,
       }}
-      whileHover={{ y: -8, scale: 1.02 }}
-      style={{ perspective: '1200px' }}
+      whileHover={{ y: -5, scale: 1.02 }}
+      style={{
+        perspective: '1200px',
+      }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="relative"
+      className="relative h-full"
     >
       <motion.div
         style={{
@@ -326,65 +214,55 @@ const ConfessionCard: React.FC<ConfessionProps & { index: number }> = ({
           rotateY: rotateY,
           transformStyle: 'preserve-3d',
         }}
-        transition={{ type: 'spring', stiffness: 280, damping: 18 }}
-        className="bg-gradient-to-br from-indigo-900/50 via-purple-900/30 to-black/70 border border-indigo-500/40 backdrop-blur-xl rounded-3xl p-8 shadow-2xl hover:shadow-indigo-500/30 hover:border-indigo-400/60 transition-all duration-300 relative overflow-hidden group"
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        className="bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-black/60 border border-indigo-500/30 backdrop-blur-xl rounded-3xl p-7 min-h-64 flex flex-col justify-between shadow-2xl hover:shadow-indigo-500/20 hover:border-indigo-400/50 transition-all duration-300 relative overflow-hidden group"
       >
-        {/* Background gradients */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/8 via-transparent to-purple-500/8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl" />
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-400/60 to-transparent" />
+        {/* Animated background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl" />
+        
+        {/* Glassmorphism blur line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-400/50 to-transparent" />
 
         <div className="relative z-10">
-          {/* Header: Anonymous + Time + Reward */}
-          <div className="flex items-center justify-between mb-6">
+          {/* Header: Team + Time */}
+          <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <motion.div
-                whileHover={{ scale: 1.15 }}
-                className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center shadow-lg border border-indigo-300/60 cursor-pointer"
-              >
-                <span className="text-white font-bold text-sm">🤐</span>
-              </motion.div>
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center shadow-lg border border-indigo-300/50">
+                <span className="text-white font-bold text-xs">{team_name.charAt(0)}</span>
+              </div>
               <div>
-                <p className="text-indigo-200 text-sm font-bold">Keep it Secret</p>
+                <p className="text-indigo-200 text-xs font-semibold">{team_name}</p>
                 <p className="text-slate-400 text-xs">{formatTime(created_at)}</p>
               </div>
             </div>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              className="bg-gradient-to-r from-amber-500/30 to-orange-500/20 border border-amber-400/50 rounded-xl px-4 py-2.5 backdrop-blur-md shadow-lg"
-            >
-              <p className="text-amber-300 text-xs font-bold flex items-center gap-1.5">
-                <Zap size={14} />
-                +{tokReward} 🍕TOK
-              </p>
-            </motion.div>
+            <div className="bg-amber-500/20 border border-amber-400/40 rounded-lg px-3 py-1 backdrop-blur-sm">
+              <p className="text-amber-300 text-xs font-bold">3 🍕TOK</p>
+            </div>
           </div>
 
           {/* Content */}
-          <p className="text-slate-100 text-lg leading-relaxed font-light mb-6 break-words">
+          <p className="text-slate-100 text-base leading-relaxed font-light mb-5 break-words">
             {content}
           </p>
 
           {/* Vote Bar */}
-          <div className="mb-6 space-y-2">
-            <div className="bg-slate-800/50 rounded-full h-2.5 overflow-hidden border border-slate-700/50">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${votePercentage}%` }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-                className="h-full bg-gradient-to-r from-green-400 via-emerald-400 to-emerald-500 shadow-lg shadow-emerald-500/50"
-              />
-            </div>
-            <div className="flex justify-between text-xs text-slate-400">
-              <span>👍 {upvoteCount} ({Math.round(votePercentage)}%)</span>
-              <span>👎 {downvoteCount}</span>
-            </div>
+          <div className="mb-4 bg-slate-800/50 rounded-full h-2 overflow-hidden border border-slate-700/50">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${votePercentage}%` }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="h-full bg-gradient-to-r from-green-400 to-emerald-500"
+            />
           </div>
+        </div>
 
-          {/* Vote Buttons */}
-          <div className="mb-6 pb-6 border-b border-slate-700/50 flex items-center gap-3">
+        {/* Footer: Vote Buttons */}
+        <div className="relative z-10 flex items-center justify-between pt-5 border-t border-slate-700/50">
+          <div className="flex items-center gap-3">
+            {/* Upvote Button */}
             <motion.button
-              whileHover={{ scale: 1.12 }}
-              whileTap={{ scale: 0.92 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 if (downvoted) {
                   setDownvoted(false);
@@ -393,25 +271,26 @@ const ConfessionCard: React.FC<ConfessionProps & { index: number }> = ({
                 setUpvoted(!upvoted);
                 setUpvoteCount(upvoted ? upvoteCount - 1 : upvoteCount + 1);
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-200 font-semibold ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all duration-200 ${
                 upvoted
-                  ? 'bg-green-500/40 border border-green-400/70 text-green-300 shadow-lg shadow-green-500/30'
-                  : 'bg-slate-700/50 border border-slate-600/50 text-slate-300 hover:bg-slate-700/70'
+                  ? 'bg-green-500/30 border border-green-400/60 text-green-300'
+                  : 'bg-slate-700/40 border border-slate-600/50 text-slate-400 hover:bg-slate-700/60'
               }`}
             >
               <motion.span
-                animate={{ scale: upvoted ? 1.3 : 1 }}
+                animate={{ scale: upvoted ? 1.2 : 1 }}
                 transition={{ type: 'spring', stiffness: 400 }}
-                className="text-xl"
+                className="text-lg"
               >
                 👍
               </motion.span>
-              <span className="text-sm">{upvoteCount}</span>
+              <span className="text-xs font-semibold">{upvoteCount}</span>
             </motion.button>
 
+            {/* Downvote Button */}
             <motion.button
-              whileHover={{ scale: 1.12 }}
-              whileTap={{ scale: 0.92 }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => {
                 if (upvoted) {
                   setUpvoted(false);
@@ -420,216 +299,36 @@ const ConfessionCard: React.FC<ConfessionProps & { index: number }> = ({
                 setDownvoted(!downvoted);
                 setDownvoteCount(downvoted ? downvoteCount - 1 : downvoteCount + 1);
               }}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all duration-200 font-semibold ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-all duration-200 ${
                 downvoted
-                  ? 'bg-red-500/40 border border-red-400/70 text-red-300 shadow-lg shadow-red-500/30'
-                  : 'bg-slate-700/50 border border-slate-600/50 text-slate-300 hover:bg-slate-700/70'
+                  ? 'bg-red-500/30 border border-red-400/60 text-red-300'
+                  : 'bg-slate-700/40 border border-slate-600/50 text-slate-400 hover:bg-slate-700/60'
               }`}
             >
               <motion.span
-                animate={{ scale: downvoted ? 1.3 : 1 }}
+                animate={{ scale: downvoted ? 1.2 : 1 }}
                 transition={{ type: 'spring', stiffness: 400 }}
-                className="text-xl"
+                className="text-lg"
               >
                 👎
               </motion.span>
-              <span className="text-sm">{downvoteCount}</span>
+              <span className="text-xs font-semibold">{downvoteCount}</span>
             </motion.button>
+          </div>
 
+          {/* Net Vote Score */}
+          <div className="text-right">
             <motion.div
               key={netVotes}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="ml-auto text-sm font-bold text-indigo-300"
+              className="text-sm font-bold text-indigo-300"
             >
               {netVotes > 0 ? '+' : ''}{netVotes}
             </motion.div>
           </div>
-
-          {/* Reply Button and Replies Section */}
-          <div className="space-y-4">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowReplyForm(!showReplyForm)}
-              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm font-semibold"
-            >
-              <MessageSquare size={16} />
-              Reply ({replies.length})
-            </motion.button>
-
-            {/* Reply Form */}
-            <AnimatePresence>
-              {showReplyForm && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="ml-4 bg-slate-800/40 border border-slate-700/50 rounded-xl p-4 overflow-hidden"
-                >
-                  <textarea
-                    placeholder="Share an anonymous reply... (gets you +25 🍕TOK)"
-                    value={replyInput}
-                    onChange={(e) => setReplyInput(e.target.value)}
-                    className="w-full bg-slate-900/50 border border-slate-700/70 rounded-lg px-4 py-3 text-slate-200 placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500/70 focus:ring-1 focus:ring-indigo-500/50 transition-all resize-none"
-                    rows={3}
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleReply}
-                      disabled={isReplying}
-                      className="flex-1 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 disabled:opacity-50 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg"
-                    >
-                      {isReplying ? (
-                        <>
-                          <motion.div
-                            animate={{ scale: [1, 1.2, 1] }}
-                            transition={{ duration: 0.6 }}
-                            className="text-lg"
-                          >
-                            🍕
-                          </motion.div>
-                          Minting...
-                        </>
-                      ) : (
-                        <>
-                          <Send size={16} />
-                          Reply & Mint
-                        </>
-                      )}
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => setShowReplyForm(false)}
-                      className="px-4 py-2 bg-slate-700/50 hover:bg-slate-700/70 text-slate-300 rounded-lg transition-all"
-                    >
-                      Cancel
-                    </motion.button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Replies */}
-            <AnimatePresence>
-              {showReplies && replies.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-3 mt-4"
-                >
-                  {replies.map((reply, idx) => (
-                    <ReplyCard key={reply.id} {...reply} index={idx} />
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Show/Hide Replies Toggle */}
-            {replies.length > 0 && (
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                onClick={() => setShowReplies(!showReplies)}
-                className="flex items-center gap-2 text-slate-400 hover:text-slate-300 transition-colors text-xs ml-4 mt-2"
-              >
-                <ChevronDown
-                  size={14}
-                  className={`transition-transform ${showReplies ? 'rotate-180' : ''}`}
-                />
-                {showReplies ? 'Hide' : 'Show'} {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
-              </motion.button>
-            )}
-          </div>
         </div>
       </motion.div>
-    </motion.div>
-  );
-};
-
-const ConfessionInputForm: React.FC<{
-  onSubmit: (text: string) => void;
-  isLoading: boolean;
-}> = ({ onSubmit, isLoading }) => {
-  const [text, setText] = useState('');
-  const [charCount, setCharCount] = useState(0);
-  const maxChars = 280;
-
-  const handleSubmit = () => {
-    if (text.trim() && !isLoading) {
-      onSubmit(text);
-      setText('');
-      setCharCount(0);
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.1 }}
-      className="bg-gradient-to-br from-indigo-900/40 via-purple-900/30 to-black/60 border border-indigo-500/40 backdrop-blur-xl rounded-3xl p-8 shadow-2xl mb-8"
-    >
-      <h3 className="text-lg font-bold text-indigo-300 mb-4 flex items-center gap-2">
-        <span className="text-2xl">🤐</span>
-        Share Your Anonymous Confession
-      </h3>
-      
-      <textarea
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          setCharCount(e.target.value.length);
-        }}
-        placeholder="What's on your mind? (anonymous posts earn 50 🍕TOK)"
-        maxLength={maxChars}
-        className="w-full bg-slate-900/50 border border-slate-700/70 rounded-xl px-5 py-4 text-slate-200 placeholder-slate-500 text-base focus:outline-none focus:border-indigo-500/70 focus:ring-2 focus:ring-indigo-500/50 transition-all resize-none mb-4"
-        rows={4}
-      />
-
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-xs text-slate-400">
-          {charCount}/{maxChars} characters
-        </span>
-        <motion.div
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          className="text-xs font-semibold"
-        >
-          <span className={charCount > maxChars * 0.8 ? 'text-amber-400' : 'text-slate-400'}>
-            +50 🍕TOK • {maxChars - charCount} left
-          </span>
-        </motion.div>
-      </div>
-
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={handleSubmit}
-        disabled={isLoading || !text.trim()}
-        className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 hover:from-indigo-600 hover:via-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xl"
-      >
-        {isLoading ? (
-          <>
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-              className="text-lg"
-            >
-              🍕
-            </motion.div>
-            Posting Anonymously...
-          </>
-        ) : (
-          <>
-            <Send size={18} />
-            Post & Mint Tokens
-          </>
-        )}
-      </motion.button>
     </motion.div>
   );
 };
@@ -639,7 +338,6 @@ export function ArenaPage() {
   const [selectedTeam, setSelectedTeam] = useState<number | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [displayConfessions, setDisplayConfessions] = useState<ConfessionProps[]>([]);
-  const [isPostingConfession, setIsPostingConfession] = useState(false);
 
   useEffect(() => {
     if (confessions.length > 0) {
@@ -653,26 +351,12 @@ export function ArenaPage() {
     ? TEAMS.find((t) => t.id === selectedTeam)
     : null;
 
-  const handlePostConfession = (text: string) => {
-    setIsPostingConfession(true);
-    // Simulate smart contract minting
-    setTimeout(() => {
-      // Add new confession to the list
-      const newConfession: ConfessionProps = {
-        id: Date.now().toString(),
-        username: 'anonymous',
-        team_name: selectedTeamData?.name || 'Anonymous',
-        content: text,
-        upvotes: 0,
-        downvotes: 0,
-        created_at: new Date().toISOString(),
-        tokReward: 50,
-        replies: [],
-      };
-      setDisplayConfessions([newConfession, ...displayConfessions]);
-      setIsPostingConfession(false);
-    }, 1500);
-  };
+  // Debug logging
+  useEffect(() => {
+    if (selectedTeamData) {
+      console.log('Selected team:', selectedTeamData.name);
+    }
+  }, [selectedTeamData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-slate-900 text-white">
@@ -702,7 +386,7 @@ export function ArenaPage() {
                 <h1 className="text-5xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
                   ARENA
                 </h1>
-                <p className="text-slate-400 text-sm tracking-wider">Select your team to confess anonymously</p>
+                <p className="text-slate-400 text-sm tracking-wider">Select your team to enter</p>
               </motion.div>
 
               <motion.div
@@ -775,7 +459,7 @@ export function ArenaPage() {
                 transition={{ duration: 0.5, delay: 0.4 }}
                 className="text-center text-slate-500 text-xs mt-2"
               >
-                Confess anonymously and earn 🍕TOK
+                Confess anonymously with your team
               </motion.p>
             </div>
           </motion.div>
@@ -800,7 +484,7 @@ export function ArenaPage() {
                     {selectedTeamData?.name || 'Loading...'}
                   </h2>
                   <p className="text-slate-400 text-sm">
-                    {Math.floor(Math.random() * 10) + 3} anonymous confessions from your team
+                    {Math.floor(Math.random() * 10) + 3} teammates venting anonymously
                   </p>
                 </div>
                 
@@ -821,12 +505,6 @@ export function ArenaPage() {
                 </div>
               </motion.div>
 
-              {/* Confession Input Form */}
-              <ConfessionInputForm 
-                onSubmit={handlePostConfession}
-                isLoading={isPostingConfession}
-              />
-
               {/* Confessions Grid */}
               <AnimatePresence mode="popLayout">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -841,7 +519,7 @@ export function ArenaPage() {
                         transition={{ duration: 2, repeat: Infinity }}
                         className="text-5xl mb-4"
                       >
-                        🤐
+                        🍕
                       </motion.div>
                       <p className="text-slate-400 text-lg">Loading confessions...</p>
                     </motion.div>
