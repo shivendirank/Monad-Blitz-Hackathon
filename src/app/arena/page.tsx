@@ -5,6 +5,7 @@ import { PizzaOrderDashboard } from '@/components/PizzaOrderDashboard';
 import { PredictionMarket } from '@/components/PredictionMarket';
 import { LiveStats } from '@/components/LiveStats';
 import { ConnectButton } from '@/components/ConnectButton';
+import { TeamSelector } from '@/components/TeamSelector';
 
 export default function ArenaPage() {
   return (
@@ -61,6 +62,13 @@ export default function ArenaPage() {
                 ))}
               </div>
             </div>
+          </div>
+
+          <div className="bg-primary/10 border border-primary/20 p-5 rounded space-y-4">
+            <h3 className="text-xs font-bold text-white uppercase tracking-[0.2em]">
+              Join Team
+            </h3>
+            <TeamSelector />
           </div>
 
           <div className="bg-primary/10 border border-primary/20 p-5 rounded space-y-4">
